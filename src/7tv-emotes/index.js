@@ -222,7 +222,7 @@ class SevenTVEmotes extends Addon {
 			this.closeSocket();
 
 			if (this.root.flavor == "main" && this.chat.context.get('addon.seventv_emotes.socket')) {
-				this.socket = new WebSocket("wss://api.7tv.app/v2/ws");
+				this.socket = new WebSocket("wss://ws.7tv.app/");
 
 				this.socket.addEventListener("message", (event) => {
 					this.onSocketMessage(event.data);
