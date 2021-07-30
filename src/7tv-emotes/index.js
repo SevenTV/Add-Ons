@@ -232,21 +232,19 @@ class SevenTVEmotes extends Addon {
 					this.closeSocket();
 
 					if (event.code != 1000) {
-						if (!this.socketReconnectTries) this.socketReconnectTries = 0;
-
-						let reconnectTimeout = 2500 * Math.pow(2, this.socketReconnectTries);
+						if (!this.socketReconnectDelay) this.socketReconnectDelay = 1000;
 
 						this.socketReconnectTimeout = setTimeout(() => {
 							this.socketReconnectTimeout = undefined;
 							this.setupSocket();
-						}, reconnectTimeout);
+						}, this.socketReconnectDelay);
 
-						this.socketReconnectTries += 1;
+						this.socketReconnectDelay *= Math.random() * 0.2 + 1.3;
 					}
 				});
 
 				this.socket.addEventListener("open", () => {
-					this.socketReconnectTries = undefined;
+					this.socketReconnectDelay = undefined;
 					this.subscribeActiveChannels();
 					resolve();
 				});
