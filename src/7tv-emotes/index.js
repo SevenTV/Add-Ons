@@ -228,16 +228,25 @@ class SevenTVEmotes extends Addon {
 					this.onSocketMessage(event.data);
 				});
 
-				this.socket.addEventListener("close", () => {
+				this.socket.addEventListener("close", (event) => {
 					this.closeSocket();
 
-					this.socketReconnectTimeout = setTimeout(() => {
-						this.socketReconnectTimeout = undefined;
-						this.setupSocket();
-					}, 500);
+					if (event.code != 1000) {
+						if (!this.socketReconnectTries) this.socketReconnectTries = 0;
+
+						let reconnectTimeout = 2500 * Math.pow(2, this.socketReconnectTries);
+
+						this.socketReconnectTimeout = setTimeout(() => {
+							this.socketReconnectTimeout = undefined;
+							this.setupSocket();
+						}, reconnectTimeout);
+
+						this.socketReconnectTries += 1;
+					}
 				});
 
 				this.socket.addEventListener("open", () => {
+					this.socketReconnectTries = undefined;
 					this.subscribeActiveChannels();
 					resolve();
 				});
