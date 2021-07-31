@@ -176,6 +176,8 @@ class SevenTVEmotes extends Addon {
 				3: emote.urls[2][1],
 				4: emote.urls[3][1]
 			},
+			modifier: (emote.visibility & 128) == 128,
+			modifier_offset: "0",
 			width: emote.width[0],
 			height: emote.height[0],
 			click_url: `https://7tv.app/emotes/${emote.id}`
