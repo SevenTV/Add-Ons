@@ -29,12 +29,12 @@ class SevenTVEmotes extends Addon {
 			}
 		});
 
-		this.settings.add('addon.seventv_emotes.socket', {
+		this.settings.add('addon.seventv_emotes.emote_updates', {
 			default: true,
 			ui: {
-				path: 'Add-Ons > 7TV Emotes >> Socket',
-				title: 'Web Socket',
-				description: 'Enables live 7TV emote updates via Web Socket.',
+				path: 'Add-Ons > 7TV Emotes >> Live Emote Updates',
+				title: 'Enable emote updates',
+				description: 'Enables live updates when a 7TV emote is added or removed in the current channel.',
 				component: 'setting-check-box',
 			}
 		});
@@ -42,8 +42,8 @@ class SevenTVEmotes extends Addon {
 		this.settings.add('addon.seventv_emotes.update_messages', {
 			default: true,
 			ui: {
-				path: 'Add-Ons > 7TV Emotes >> Socket',
-				title: 'Emote update messages',
+				path: 'Add-Ons > 7TV Emotes >> Live Emote Updates',
+				title: 'Show update messages',
 				description: 'Show messages in chat when emotes are updated in the current channel.',
 				component: 'setting-check-box',
 			}
@@ -54,16 +54,9 @@ class SevenTVEmotes extends Addon {
 		this.chat.context.on('changed:addon.seventv_emotes.global_emotes', () => this.updateGlobalEmotes());
 		this.chat.context.on('changed:addon.seventv_emotes.channel_emotes', async () => {
 			await this.updateChannelSets();
-			this.subscribeActiveChannels();
+			this.updateEventSource();
 		});
-		this.chat.context.on('changed:addon.seventv_emotes.socket', async () => {
-			try {
-				await this.setupSocket();
-			}
-			catch (e) {
-				return;
-			}
-		});
+		this.chat.context.on('changed:addon.seventv_emotes.emote_updates', () => this.updateEventSource());
 
 		this.on('chat:room-add', this.addChannel, this);
 		this.on('chat:room-remove', this.removeChannel, this);
@@ -72,17 +65,17 @@ class SevenTVEmotes extends Addon {
 
 		this.updateGlobalEmotes();
 		this.updateChannelSets();
-
-		this.setupSocket();
+		this.updateEventSource();
 	}
 
 	async addChannel(channel) {
 		await this.addChannelSet(channel);
-		this.subscribeChannel(channel);
+		this.updateEventSource();
 	}
 
 	removeChannel(channel) {
 		this.removeChannelSet(channel);
+		this.updateEventSource();
 	}
 
 	async updateGlobalEmotes() {
@@ -109,6 +102,40 @@ class SevenTVEmotes extends Addon {
 		}
 	}
 
+	async addBadges() {
+		const response = await fetch(`https://api.7tv.app/v2/badges?user_identifier=twitch_id`);
+		if (response.ok) {
+			const json = await response.json();
+			if (typeof json == "object" && json != null && json.badges) {
+				for (const badge of json.badges) {
+					const id = `addon.seventv_emotes.badge-${badge.id}`;
+					this.badges.loadBadgeData(id, {
+						id: badge.id,
+						title: badge.tooltip,
+						slot: 69,
+						image: badge.urls[1][1],
+						urls: {
+							1: badge.urls[2][1]
+						},
+						svg: false
+					});
+
+					for (const userID of badge.users) {
+						this.chat.getUser(String(userID)).addBadge('addon.seventv_emotes', id);
+					}
+				}
+			}
+		}
+	}
+
+	getChannelSetID(channel) {
+		return `addon.seventv_emotes.channel-${channel.login}`;
+	}
+
+	getChannelSet(channel) {
+		return this.emotes.emote_sets[this.getChannelSetID(channel)];
+	}
+
 	async fetchChannelEmotes(channelLogin) {
 		const response = await fetch(`https://api.7tv.app/v2/users/${channelLogin}/emotes`);
 		if (response.ok) {
@@ -121,10 +148,6 @@ class SevenTVEmotes extends Addon {
 
 			return emotes;
 		}
-	}
-
-	getChannelSetID(channel) {
-		return `addon.seventv_emotes.channel-${channel.login}`;
 	}
 
 	async addChannelSet(channel, emotes) {
@@ -148,10 +171,6 @@ class SevenTVEmotes extends Addon {
 		const setID = this.getChannelSetID(channel);
 		channel.removeSet('addon.seventv_emotes', setID);
 		this.emotes.unloadSet(setID);
-	}
-
-	getChannelSet(channel) {
-		return this.emotes.emote_sets[this.getChannelSetID(channel)];
 	}
 
 	async updateChannelSets() {
@@ -193,158 +212,86 @@ class SevenTVEmotes extends Addon {
 		return ffzEmote;
 	}
 
-	async addBadges() {
-		const response = await fetch(`https://api.7tv.app/v2/badges?user_identifier=twitch_id`);
-		if (response.ok) {
-			const json = await response.json();
-			if (typeof json == "object" && json != null && json.badges) {
-				for (const badge of json.badges) {
-					const id = `addon.seventv_emotes.badge-${badge.id}`;
-					this.badges.loadBadgeData(id, {
-						id: badge.id,
-						title: badge.tooltip,
-						slot: 69,
-						image: badge.urls[1][1],
-						urls: {
-							1: badge.urls[2][1]
-						},
-						svg: false
-					});
+    updateEventSource() {
+        this.closeEventSource();
 
-					for (const userID of badge.users) {
-						this.chat.getUser(String(userID)).addBadge('addon.seventv_emotes', id);
-					}
-				}
-			}
-		}
-	}
+		if (this.chat.context.get('addon.seventv_emotes.emote_updates') && this.chat.context.get('addon.seventv_emotes.channel_emotes')) {
+			const channelLogins = [];
+			for (let channel of this.chat.iterateRooms()) channelLogins.push(channel.login);
 
-	setupSocket() {
-		return new Promise((resolve, reject) => {
-			this.closeSocket();
+			if (channelLogins.length > 0) {
+				this.eventSource = new EventSource(`https://events.7tv.app/v1/channel-emotes?channel=${encodeURIComponent(channelLogins.join(","))}`);
 
-			if (this.root.flavor == "main" && this.chat.context.get('addon.seventv_emotes.socket')) {
-				this.socket = new WebSocket("wss://ws.7tv.app/");
+				this.eventSource.addEventListener("open", () => this.eventSourceReconnectDelay = undefined);
 
-				this.socket.addEventListener("message", (event) => {
-					this.onSocketMessage(event.data);
-				});
+				this.eventSource.addEventListener("update", event => this.handleChannelEmoteUpdate(event));
 
-				this.socket.addEventListener("close", (event) => {
-					this.closeSocket();
+				this.eventSource.addEventListener("error", () => {
+					if (this.eventSource.readyState == EventSource.CLOSED) {
+						this.closeEventSource();
 
-					if (event.code != 1000) {
-						if (!this.socketReconnectDelay) this.socketReconnectDelay = 1000;
+						if (!this.eventSourceReconnectDelay) this.eventSourceReconnectDelay = 5000;
 
-						this.socketReconnectTimeout = setTimeout(() => {
-							this.socketReconnectTimeout = undefined;
-							this.setupSocket();
-						}, this.socketReconnectDelay);
+						this.eventSourceReconnectTimeout = setTimeout(() => {
+							this.eventSourceReconnectTimeout = undefined;
+							this.updateEventSource();
+						}, this.eventSourceReconnectDelay);
 
-						this.socketReconnectDelay *= Math.random() * 0.2 + 1.3;
+						this.eventSourceReconnectDelay *= 2 + Math.random() * 0.2;
 					}
 				});
-
-				this.socket.addEventListener("open", () => {
-					this.socketReconnectDelay = undefined;
-					this.subscribeActiveChannels();
-					resolve();
-				});
-
-				this.socket.addEventListener("error", () => {
-					this.closeSocket();
-					reject();
-				});
-			}
-			else {
-				resolve();
-			}
-		});
-	}
-
-	closeSocket() {
-		if (this.socket) this.socket.close();
-		if (this.socketHeartbeat) clearInterval(this.socketHeartbeat);
-		if (this.socketReconnectTimeout) clearTimeout(this.socketReconnectTimeout);
-		this.socket = undefined;
-		this.socketHeartbeat = undefined;
-		this.socketReconnectTimeout = undefined;
-	}
-
-	sendSocketHeartbeat() {
-		if (this.socket) {
-			this.socket.send(JSON.stringify({
-				op: 2
-			}));
-		}
-	}
-
-	subscribeChannel(channel) {
-		if (this.socket) {
-			this.socket.send(JSON.stringify({
-				op: 6,
-				d: {
-					type: 1,
-					params: {
-						channel: channel.login
-					}
-				}
-			}));
-		}
-	}
-
-	subscribeActiveChannels() {
-		const enabled = this.chat.context.get('addon.seventv_emotes.channel_emotes');
-		for (const channel of this.chat.iterateRooms()) {
-			if (enabled) {
-				this.subscribeChannel(channel);
 			}
 		}
-	}
+    }
 
-	handleChannelEmoteUpdate(data) {
+    closeEventSource() {
+        if (this.eventSource) this.eventSource.close();
+        if (this.eventSourceReconnectTimeout) clearTimeout(this.eventSourceReconnectTimeout);
+        this.eventSource = null;
+        this.eventSourceReconnectTimeout = undefined;
+    }
+
+	handleChannelEmoteUpdate(event) {
 		if (!this.chat.context.get('addon.seventv_emotes.channel_emotes')) return;
+
+		let data = JSON.parse(event.data);
 
 		for (const channel of this.chat.iterateRooms()) {
 			if (channel.login == data.channel) {
 				const emoteSet = this.getChannelSet(channel);
 				if (emoteSet) {
 					const emotes = emoteSet.emotes || {};
-					if (data.removed) {
-						delete emotes[data.emote.id];
+					if (data.action == 'ADD' || data.action == 'UPDATE') {
+						emotes[data.emote_id] = this.convertEmote({id: data.emote_id, ...data.emote});
 					}
-					else {
-						emotes[data.emote.id] = this.convertEmote(data.emote);
+					else if (data.action == 'REMOVE') {
+						delete emotes[data.emote_id];
 					}
 					this.addChannelSet(channel, Object.values(emotes));
 				}
 
 				if (this.chat.context.get('addon.seventv_emotes.update_messages')) {
-					this.siteChat.addNotice(channel.login, `[7TV] ${data.actor} ${data.removed ? 'removed' : 'added'} the emote "${data.emote.name}"`);
-				}
-			}
-		}
-	}
-
-	onSocketMessage(messageString) {
-		const message = JSON.parse(messageString);
-		
-		const data = message.d;
-
-		switch(message.op) {
-			case 0: {
-				switch (message.t) {
-					case "CHANNEL_EMOTES_UPDATE": {
-						this.handleChannelEmoteUpdate(data);
-						break;
+					let message = `[7TV] ${data.actor} `;
+					switch (data.action) {
+						case 'ADD': {
+							message += 'added the emote';
+							break;
+						}
+						case 'REMOVE': {
+							message += 'removed the emote';
+							break;
+						}
+						case 'UPDATE': {
+							message += 'renamed the emote';
+							break;
+						}
+						default: {
+							message += `performed '${data.action}' on the emote`;
+							break;
+						}
 					}
+					this.siteChat.addNotice(channel.login, `${message} "${data.name}"`);
 				}
-				break;
-			}
-			case 1: {
-				if (this.socketHeartbeat) clearInterval(this.socketHeartbeat);
-				this.socketHeartbeat = setInterval(this.sendSocketHeartbeat.bind(this), data.heartbeat_interval);
-				break;
 			}
 		}
 	}
