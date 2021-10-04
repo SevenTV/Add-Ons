@@ -120,9 +120,7 @@ class SevenTVEmotes extends Addon {
 						svg: false
 					});
 
-					for (const userID of badge.users) {
-						this.chat.getUser(String(userID)).addBadge('addon.seventv_emotes', id);
-					}
+					this.badges.setBulk('addon.seventv_emotes', id, badge.users);
 				}
 			}
 		}
