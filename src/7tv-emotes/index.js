@@ -157,7 +157,10 @@ class SevenTVEmotes extends Addon {
 	removeBadges() {
 		for (let id of this.bulkBadgeIDs) {
 			this.badges.deleteBulk("addon.seventv_emotes", id);
+			delete this.badges.badges[id];
 		}
+
+		this.badges.buildBadgeCSS();
 
 		this.bulkBadgeIDs.clear();
 	}
