@@ -29,10 +29,20 @@ class SevenTVEmotes extends Addon {
 			}
 		});
 
+		this.settings.add('addon.seventv_emotes.unlisted_emotes', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > 7TV Emotes >> Emotes > Emote Visibility',
+				title: 'Show Unlisted Emotes',
+				description: 'Show emotes which have been deemed non-TOS friendly by 7TV moderators.',
+				component: 'setting-check-box',
+			}
+		});
+
 		this.settings.add('addon.seventv_emotes.emote_updates', {
 			default: true,
 			ui: {
-				path: 'Add-Ons > 7TV Emotes >> Live Emote Updates',
+				path: 'Add-Ons > 7TV Emotes >> Emotes > Live Emote Updates',
 				title: 'Enable emote updates',
 				description: 'Enables live updates when a 7TV emote is added or removed in the current channel.',
 				component: 'setting-check-box',
@@ -42,7 +52,7 @@ class SevenTVEmotes extends Addon {
 		this.settings.add('addon.seventv_emotes.update_messages', {
 			default: true,
 			ui: {
-				path: 'Add-Ons > 7TV Emotes >> Live Emote Updates',
+				path: 'Add-Ons > 7TV Emotes >> Emotes > Live Emote Updates',
 				title: 'Show update messages',
 				description: 'Show messages in chat when emotes are updated in the current channel.',
 				component: 'setting-check-box',
@@ -52,10 +62,11 @@ class SevenTVEmotes extends Addon {
 
 	async onEnable() {
 		this.chat.context.on('changed:addon.seventv_emotes.global_emotes', () => this.updateGlobalEmotes());
-		this.chat.context.on('changed:addon.seventv_emotes.channel_emotes', async () => {
-			await this.updateChannelSets();
+		this.chat.context.on('changed:addon.seventv_emotes.channel_emotes', () => {
+			this.updateChannelSets();
 			this.updateEventSource();
 		});
+		this.chat.context.on('changed:addon.seventv_emotes.unlisted_emotes', () => this.updateChannelSets());
 		this.chat.context.on('changed:addon.seventv_emotes.emote_updates', () => this.updateEventSource());
 
 		this.on('chat:room-add', this.addChannel, this);
@@ -68,13 +79,13 @@ class SevenTVEmotes extends Addon {
 		this.updateEventSource();
 	}
 
-	async addChannel(channel) {
-		await this.addChannelSet(channel);
+	addChannel(channel) {
+		this.updateChannelSet(channel);
 		this.updateEventSource();
 	}
 
 	removeChannel(channel) {
-		this.removeChannelSet(channel);
+		this.setChannelSet(channel, null);
 		this.updateEventSource();
 	}
 
@@ -127,60 +138,94 @@ class SevenTVEmotes extends Addon {
 	}
 
 	getChannelSetID(channel) {
-		return `addon.seventv_emotes.channel-${channel.login}`;
+		return `addon.seventv_emotes.channel-${channel.id}`;
 	}
 
 	getChannelSet(channel) {
 		return this.emotes.emote_sets[this.getChannelSetID(channel)];
 	}
 
-	async fetchChannelEmotes(channelLogin) {
-		const response = await fetch(`https://api.7tv.app/v2/users/${channelLogin}/emotes`);
-		if (response.ok) {
-			const json = await response.json();
+	setChannelSet(channel, ffzEmotes) {
+		const setID = this.getChannelSetID(channel);
 
-			const emotes = [];
-			for (const emote of json) {
-				emotes.push(this.convertEmote(emote));
-			}
+		channel.removeSet('addon.seventv_emotes', setID);
+		this.emotes.unloadSet(setID);
 
-			return emotes;
-		}
-	}
-
-	async addChannelSet(channel, emotes) {
-		this.removeChannelSet(channel);
-
-		if (emotes === undefined) {
-			emotes = await this.fetchChannelEmotes(channel.login);
-		}
-
-		if (emotes && emotes.length > 0) {
-			channel.addSet('addon.seventv_emotes', this.getChannelSetID(channel), {
+		if (ffzEmotes && ffzEmotes.length > 0) {
+			channel.addSet('addon.seventv_emotes', setID, {
 				title: "Channel Emotes",
 				source: "7TV",
 				icon: "https://7tv.app/assets/favicon.png",
-				emotes: emotes
+				emotes: ffzEmotes
 			});
 		}
 	}
 
-	removeChannelSet(channel) {
-		const setID = this.getChannelSetID(channel);
-		channel.removeSet('addon.seventv_emotes', setID);
-		this.emotes.unloadSet(setID);
+	addEmoteToChannelSet(channel, emote, force = false) {
+		const emoteSet = this.getChannelSet(channel);
+
+		if (emoteSet) {
+			if (force || this.shouldShowEmote(emote)) {
+				const emotes = emoteSet.emotes || {};
+
+				emotes[emote.id] = this.convertEmote(emote);
+
+				this.setChannelSet(channel, Object.values(emotes));
+				return true;
+	    	}
+		}
+
+		return false;
+	}
+
+	removeEmoteFromChannelSet(channel, emote) {
+		const emoteSet = this.getChannelSet(channel);
+
+		if (emoteSet) {
+			const emotes = emoteSet.emotes || {};
+
+			if (emotes[emote.id] === undefined) return false;
+
+			delete emotes[emote.id];
+
+			this.setChannelSet(channel, Object.values(emotes));
+			return true;
+		}
+
+		return false;
+	}
+
+	async updateChannelSet(channel) {
+		if (this.chat.context.get('addon.seventv_emotes.channel_emotes')) {
+			const response = await fetch(`https://api.7tv.app/v2/users/${channel.login}/emotes`);
+
+			if (response.ok) {
+				let emotes = await response.json();
+
+				let ffzEmotes = [];
+				for (let emote of emotes) {
+					if (this.shouldShowEmote(emote)) {
+						ffzEmotes.push(this.convertEmote(emote));
+					}
+				}
+
+				this.setChannelSet(channel, ffzEmotes);
+				return true;
+			}
+		}
+
+		this.setChannelSet(channel, null);
+		return false;
 	}
 
 	async updateChannelSets() {
-		const enabled = this.chat.context.get('addon.seventv_emotes.channel_emotes');
 		for (const channel of this.chat.iterateRooms()) {
-			if (enabled) {
-				await this.addChannelSet(channel);
-			}
-			else {
-				this.removeChannelSet(channel);
-			}
+			await this.updateChannelSet(channel);
 		}
+	}
+
+	getBitFlag(byte, mask) {
+		return (byte & mask) == mask;
 	}
 
 	convertEmote(emote) {
@@ -193,7 +238,7 @@ class SevenTVEmotes extends Addon {
 				3: emote.urls[2][1],
 				4: emote.urls[3][1]
 			},
-			modifier: (emote.visibility & 128) == 128,
+			modifier: this.getBitFlag(emote.visibility, 1 << 7),
 			modifier_offset: "0",
 			width: emote.width[0],
 			height: emote.height[0],
@@ -208,6 +253,15 @@ class SevenTVEmotes extends Addon {
 		}
 
 		return ffzEmote;
+	}
+
+	shouldShowEmote(emote) {
+		const ShowUnlisted = this.chat.context.get('addon.seventv_emotes.unlisted_emotes');
+
+		const Unlisted = this.getBitFlag(emote.visibility, 1 << 2);
+		const PermanentlyUnlisted = this.getBitFlag(emote.visibility, 1 << 8);
+
+		return ShowUnlisted || !(Unlisted || PermanentlyUnlisted);
 	}
 
     updateEventSource() {
@@ -254,42 +308,52 @@ class SevenTVEmotes extends Addon {
 
 		let data = JSON.parse(event.data);
 
-		for (const channel of this.chat.iterateRooms()) {
-			if (channel.login == data.channel) {
-				const emoteSet = this.getChannelSet(channel);
-				if (emoteSet) {
-					const emotes = emoteSet.emotes || {};
-					if (data.action == 'ADD' || data.action == 'UPDATE') {
-						emotes[data.emote_id] = this.convertEmote({id: data.emote_id, ...data.emote});
-					}
-					else if (data.action == 'REMOVE') {
-						delete emotes[data.emote_id];
-					}
-					this.addChannelSet(channel, Object.values(emotes));
-				}
+		let channel;
+		for (const room of this.chat.iterateRooms()) {
+			if (room.login == data.channel) {
+				channel = room;
+				break;
+			}
+		}
 
-				if (this.chat.context.get('addon.seventv_emotes.update_messages')) {
-					let message = `[7TV] ${data.actor} `;
-					switch (data.action) {
-						case 'ADD': {
-							message += 'added the emote';
-							break;
-						}
-						case 'REMOVE': {
-							message += 'removed the emote';
-							break;
-						}
-						case 'UPDATE': {
-							message += 'renamed the emote';
-							break;
-						}
-						default: {
-							message += `performed '${data.action}' on the emote`;
-							break;
-						}
+		if (channel) {
+			let completed = false;
+			switch (data.action) {
+				case 'ADD':
+				case 'UPDATE':
+					completed = this.addEmoteToChannelSet(channel, {...data.emote, id: data.emote_id, name: data.name});
+					break;
+				case 'REMOVE':
+					completed = this.removeEmoteFromChannelSet(channel, {...data.emote, id: data.emote_id, name: data.name});
+					break;
+			}
+
+			if (completed && this.chat.context.get('addon.seventv_emotes.update_messages')) {
+				let message = `[7TV] ${data.actor} `;
+				switch (data.action) {
+					case 'ADD': {
+						message += `added the emote "${data.name}"`;
+						break;
 					}
-					this.siteChat.addNotice(channel.login, `${message} "${data.name}"`);
+					case 'REMOVE': {
+						message += `removed the emote "${data.name}"`;
+						break;
+					}
+					case 'UPDATE': {
+						if (data.emote.name != data.name) {
+							message += `aliased the emote "${data.emote.name}" to "${data.name}"`;
+						}
+						else {
+							message += `unaliased the emote "${data.name}"`;
+						}
+						break;
+					}
+					default: {
+						message += `performed '${data.action}' on the emote "${data.name}"`;
+						break;
+					}
 				}
+				this.siteChat.addNotice(channel.login, message);
 			}
 		}
 	}
