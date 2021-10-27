@@ -33,7 +33,7 @@ class SevenTVEmotes extends Addon {
 			default: true,
 			ui: {
 				path: 'Add-Ons > 7TV Emotes >> Emotes > Emote Visibility',
-				title: 'Show Unlisted Emotes',
+				title: 'Show unlisted emotes',
 				description: 'Show emotes which have been deemed non-TOS friendly by 7TV moderators.',
 				component: 'setting-check-box',
 			}
