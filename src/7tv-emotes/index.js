@@ -58,9 +58,22 @@ class SevenTVEmotes extends Addon {
 				component: 'setting-check-box',
 			}
 		});
+
+		this.settings.add('addon.seventv_emotes.badges', {
+			default: true,
+			ui: {
+				path: 'Add-Ons > 7TV Emotes >> User Cosmetics',
+				title: 'Badges',
+				description: 'Show 7TV user badges. (Per-badge visibilty can be set in [Chat >> Badges > Visibilty > Add-Ons](~chat.badges))',
+				component: 'setting-check-box',
+			}
+		});
+
+		this.bulkBadgeIDs = new Set();
 	}
 
 	async onEnable() {
+		this.chat.context.on('changed:addon.seventv_emotes.badges', () => this.updateBadges());
 		this.chat.context.on('changed:addon.seventv_emotes.global_emotes', () => this.updateGlobalEmotes());
 		this.chat.context.on('changed:addon.seventv_emotes.channel_emotes', () => {
 			this.updateChannelSets();
@@ -72,8 +85,7 @@ class SevenTVEmotes extends Addon {
 		this.on('chat:room-add', this.addChannel, this);
 		this.on('chat:room-remove', this.removeChannel, this);
 
-		this.addBadges();
-
+		this.updateBadges();
 		this.updateGlobalEmotes();
 		this.updateChannelSets();
 		this.updateEventSource();
@@ -113,28 +125,41 @@ class SevenTVEmotes extends Addon {
 		}
 	}
 
-	async addBadges() {
-		const response = await fetch(`https://api.7tv.app/v2/badges?user_identifier=twitch_id`);
-		if (response.ok) {
-			const json = await response.json();
-			if (typeof json == "object" && json != null && json.badges) {
-				for (const badge of json.badges) {
-					const id = `addon.seventv_emotes.badge-${badge.id}`;
-					this.badges.loadBadgeData(id, {
-						id: badge.id,
-						title: badge.tooltip,
-						slot: 69,
-						image: badge.urls[1][1],
-						urls: {
-							1: badge.urls[2][1]
-						},
-						svg: false
-					});
+	async updateBadges() {
+		this.removeBadges();
 
-					this.badges.setBulk('addon.seventv_emotes', id, badge.users);
+		if (this.chat.context.get('addon.seventv_emotes.badges')) {
+			const response = await fetch(`https://api.7tv.app/v2/badges?user_identifier=twitch_id`);
+			if (response.ok) {
+				const json = await response.json();
+				if (typeof json == "object" && json != null && json.badges) {
+					for (const badge of json.badges) {
+						const id = `addon.seventv_emotes.badge-${badge.id}`;
+						this.badges.loadBadgeData(id, {
+							id: badge.id,
+							title: badge.tooltip,
+							slot: 69,
+							image: badge.urls[1][1],
+							urls: {
+								1: badge.urls[2][1]
+							},
+							svg: false
+						});
+
+						this.badges.setBulk('addon.seventv_emotes', id, badge.users);
+						this.bulkBadgeIDs.add(id);
+					}
 				}
 			}
 		}
+	}
+
+	removeBadges() {
+		for (let id of this.bulkBadgeIDs) {
+			this.badges.deleteBulk("addon.seventv_emotes", id);
+		}
+
+		this.bulkBadgeIDs.clear();
 	}
 
 	getChannelSetID(channel) {
