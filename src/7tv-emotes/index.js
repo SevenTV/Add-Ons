@@ -393,10 +393,6 @@ class SevenTVEmotes extends Addon {
 						}
 						break;
 					}
-					default: {
-						message += `performed '${data.action}' on the emote "${data.name}"`;
-						break;
-					}
 				}
 				this.siteChat.addNotice(channel.login, message);
 			}
