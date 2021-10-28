@@ -106,8 +106,6 @@ class SevenTVEmotes extends Addon {
 		this.updateAnimatedAvatars();
 
 		this.patchAvatarRenderer();
-
-		window.sevenTV = this;
 	}
 
 	addChannel(channel) {
