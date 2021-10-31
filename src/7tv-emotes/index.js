@@ -217,7 +217,7 @@ class SevenTVEmotes extends Addon {
 
 				this.setChannelSet(channel, Object.values(emotes));
 				return true;
-	    	}
+			}
 		}
 
 		return false;
@@ -309,8 +309,8 @@ class SevenTVEmotes extends Addon {
 		return ShowUnlisted || !(Unlisted || PermanentlyUnlisted);
 	}
 
-    updateEventSource() {
-        this.closeEventSource();
+	updateEventSource() {
+		this.closeEventSource();
 
 		if (this.chat.context.get('addon.seventv_emotes.emote_updates') && this.chat.context.get('addon.seventv_emotes.channel_emotes')) {
 			const channelLogins = [];
@@ -339,14 +339,14 @@ class SevenTVEmotes extends Addon {
 				});
 			}
 		}
-    }
+	}
 
-    closeEventSource() {
-        if (this.eventSource) this.eventSource.close();
-        if (this.eventSourceReconnectTimeout) clearTimeout(this.eventSourceReconnectTimeout);
-        this.eventSource = null;
-        this.eventSourceReconnectTimeout = undefined;
-    }
+	closeEventSource() {
+		if (this.eventSource) this.eventSource.close();
+		if (this.eventSourceReconnectTimeout) clearTimeout(this.eventSourceReconnectTimeout);
+		this.eventSource = null;
+		this.eventSourceReconnectTimeout = undefined;
+	}
 
 	handleChannelEmoteUpdate(event) {
 		if (!this.chat.context.get('addon.seventv_emotes.channel_emotes')) return;
