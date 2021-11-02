@@ -2,6 +2,7 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
 
+		this.inject("..api");
 		this.inject("..emotes");
 
 		this.inject('settings');
@@ -47,7 +48,7 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 			for (let channel of this.chat.iterateRooms()) channelLogins.push(channel.login);
 
 			if (channelLogins.length > 0) {
-				this.eventSource = new EventSource(`https://events.7tv.app/v1/channel-emotes?channel=${encodeURIComponent(channelLogins.join(","))}`);
+				this.eventSource = new EventSource(this.api.getEmotesEventSourceURL(channelLogins));
 
 				this.eventSource.addEventListener("open", () => this.eventSourceReconnectDelay = undefined);
 

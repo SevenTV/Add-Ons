@@ -2,6 +2,8 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
 
+		this.inject("..api");
+
 		this.inject('settings');
 		this.inject("site");
 		this.inject("site.fine");
@@ -68,13 +70,9 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 
 		if (!this.settings.get('addon.seventv_emotes.animated_avatars')) return;
 
-		const response = await fetch("https://api.7tv.app/v2/cosmetics/avatars?map_to=login");
-		if (response.ok) {
-			const json = await response.json();
-
-			for (const [login, avatar] of Object.entries(json)) {
-				this.userAvatars.set(login, avatar);
-			}
+		const avatars = await this.api.fetchAvatars();
+		for (const [login, avatar] of Object.entries(avatars)) {
+			this.userAvatars.set(login, avatar);
 		}
 	};
 

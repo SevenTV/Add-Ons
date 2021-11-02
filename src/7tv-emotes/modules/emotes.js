@@ -2,6 +2,8 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
 
+		this.inject("..api");
+
 		this.inject('settings');
 		this.inject('chat');
 		this.inject('chat.emotes');
@@ -55,22 +57,19 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 
 		if (!this.settings.get('addon.seventv_emotes.global_emotes')) return;
 
-		const response = await fetch("https://api.7tv.app/v2/emotes/global");
-		if (response.ok) {
-			const json = await response.json();
+		const emotes = await this.api.fetchGlobalEmotes();
 
-			const emotes = [];
-			for (const emote of json) {
-				emotes.push(this.convertEmote(emote));
-			}
-
-			this.emotes.addDefaultSet('addon.seventv_emotes', 'addon.seventv_emotes.global', {
-				title: "Global Emotes",
-				source: "7TV",
-				icon: "https://7tv.app/assets/favicon.png",
-				emotes: emotes
-			});
+		const ffzEmotes = [];
+		for (const emote of emotes) {
+			ffzEmotes.push(this.convertEmote(emote));
 		}
+
+		this.emotes.addDefaultSet('addon.seventv_emotes', 'addon.seventv_emotes.global', {
+			title: "Global Emotes",
+			source: "7TV",
+			icon: "https://7tv.app/assets/favicon.png",
+			emotes: ffzEmotes
+		});
 	}
 
 	getChannelSetID(channel) {
@@ -133,21 +132,17 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 
 	async updateChannelSet(channel) {
 		if (this.settings.get('addon.seventv_emotes.channel_emotes')) {
-			const response = await fetch(`https://api.7tv.app/v2/users/${channel.login}/emotes`);
+			let emotes = await this.api.fetchChannelEmotes(channel.login);
 
-			if (response.ok) {
-				let emotes = await response.json();
-
-				let ffzEmotes = [];
-				for (let emote of emotes) {
-					if (this.shouldShowEmote(emote)) {
-						ffzEmotes.push(this.convertEmote(emote));
-					}
+			let ffzEmotes = [];
+			for (let emote of emotes) {
+				if (this.shouldShowEmote(emote)) {
+					ffzEmotes.push(this.convertEmote(emote));
 				}
-
-				this.setChannelSet(channel, ffzEmotes);
-				return true;
 			}
+
+			this.setChannelSet(channel, ffzEmotes);
+			return true;
 		}
 
 		this.setChannelSet(channel, null);

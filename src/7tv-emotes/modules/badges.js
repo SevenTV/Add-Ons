@@ -2,6 +2,8 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
 
+		this.inject("..api");
+
 		this.inject('settings');
 		this.inject('chat.badges');
 
@@ -28,27 +30,22 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 		this.removeBadges();
 
 		if (this.settings.get('addon.seventv_emotes.badges')) {
-			const response = await fetch(`https://api.7tv.app/v2/badges?user_identifier=twitch_id`);
-			if (response.ok) {
-				const json = await response.json();
-				if (typeof json == "object" && json != null && json.badges) {
-					for (const badge of json.badges) {
-						const id = `addon.seventv_emotes.badge-${badge.id}`;
-						this.badges.loadBadgeData(id, {
-							id: badge.id,
-							title: badge.tooltip,
-							slot: 69,
-							image: badge.urls[1][1],
-							urls: {
-								1: badge.urls[2][1]
-							},
-							svg: false
-						});
+			const badges = await this.api.fetchBadges();
+			for (const badge of badges) {
+				const id = `addon.seventv_emotes.badge-${badge.id}`;
+				this.badges.loadBadgeData(id, {
+					id: badge.id,
+					title: badge.tooltip,
+					slot: 69,
+					image: badge.urls[1][1],
+					urls: {
+						1: badge.urls[2][1]
+					},
+					svg: false
+				});
 
-						this.badges.setBulk('addon.seventv_emotes', id, badge.users);
-						this.bulkBadgeIDs.add(id);
-					}
-				}
+				this.badges.setBulk('addon.seventv_emotes', id, badge.users);
+				this.bulkBadgeIDs.add(id);
 			}
 		}
 	}
