@@ -187,7 +187,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	}
 
 	shouldShowEmote(emote) {
-		const ShowUnlisted = this.chat.context.get('addon.seventv_emotes.unlisted_emotes');
+		const ShowUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
 
 		const Unlisted = this.getBitFlag(emote.visibility, 1 << 2);
 		const PermanentlyUnlisted = this.getBitFlag(emote.visibility, 1 << 8);
