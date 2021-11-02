@@ -7,7 +7,7 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
         this.apiBaseURI = "https://api.7tv.app/v2/";
         this.eventsBaseURI = "https://events.7tv.app/v1/";
 
-        this.clientPlatform = "FFZAddon";
+        this.clientPlatform = "ffz";
         this.clientVersion = version;
     }
 
