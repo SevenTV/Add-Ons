@@ -27,17 +27,17 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 				component: 'setting-check-box',
 			}
 		});
-    }
+	}
 
-    onEnable() {
+	onEnable() {
 		this.on('settings:changed:addon.seventv_emotes.channel_emotes', () => this.updateEventSource());
 		this.on('settings:changed:addon.seventv_emotes.emote_updates', () => this.updateEventSource());
 
-        this.on('chat:room-add', () => this.updateEventSource());
+		this.on('chat:room-add', () => this.updateEventSource());
 		this.on('chat:room-remove', () => this.updateEventSource());
 
-        this.updateEventSource();
-    }
+		this.updateEventSource();
+	}
 
 	updateEventSource() {
 		this.closeEventSource();

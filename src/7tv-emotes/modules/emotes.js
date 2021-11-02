@@ -35,9 +35,9 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 				component: 'setting-check-box',
 			}
 		});
-    }
+	}
 
-    onEnable() {
+	onEnable() {
 		this.on('settings:changed:addon.seventv_emotes.global_emotes', () => this.updateGlobalEmotes());
 		this.on('settings:changed:addon.seventv_emotes.channel_emotes', () => this.updateChannelSets());
 		this.on('settings:changed:addon.seventv_emotes.unlisted_emotes', () => this.updateChannelSets());
@@ -47,7 +47,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 
 		this.updateGlobalEmotes();
 		this.updateChannelSets();
-    }
+	}
 
 	async updateGlobalEmotes() {
 		this.emotes.removeDefaultSet('addon.seventv_emotes', 'addon.seventv_emotes.global');

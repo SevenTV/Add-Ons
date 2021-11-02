@@ -17,15 +17,15 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		});
 
 		this.userAvatars = new Map();
-    }
+	}
 
-    onEnable() {
+	onEnable() {
 		this.on('settings:changed:addon.seventv_emotes.animated_avatars', () => this.updateAnimatedAvatars());
 
 		this.updateAnimatedAvatars();
 
 		this.patchAvatarRenderer();
-    }
+	}
 
 	async patchAvatarRenderer() {
 		if (this.root.flavor != "main") return;
