@@ -21,32 +21,67 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		this.userAvatars = new Map();
 	}
 
-	onEnable() {
+	async onEnable() {
+		await this.findAvatarClass();
+
 		this.on('settings:changed:addon.seventv_emotes.animated_avatars', () => this.updateAnimatedAvatars());
 
 		this.updateAnimatedAvatars();
-
-		this.patchAvatarRenderer();
 	}
 
-	async patchAvatarRenderer() {
+	async findAvatarClass() {
 		if (this.root.flavor != "main") return;
 
 		let avatarElement = await this.site.awaitElement(".tw-avatar");
 
 		if (avatarElement) {
-			let avatarComponent = this.site.fine.getOwner(avatarElement);
+			let avatarComponent = this.fine.getOwner(avatarElement);
 
 			if (avatarComponent.type.displayName == "ScAvatar") {
-				let oldRenderer = avatarComponent.type.render;
-
-				avatarComponent.type.render = (component, ...args) => {
-					for (let child of component.children) {
-						if (child?.type?.displayName == "ImageAvatar") this.patchImageAvatar(child);
-					}
-					return oldRenderer(component, ...args);
-				}
+				this.AvatarClass = avatarComponent.type;
 			}
+		}
+	}
+
+	getUserAvatar(login) {
+		return this.userAvatars.get(login.toLowerCase());
+	}
+
+	async updateAnimatedAvatars() {
+		this.userAvatars.clear();
+
+		if (this.settings.get('addon.seventv_emotes.animated_avatars')) {
+			const avatars = await this.api.fetchAvatars();
+			for (const [login, avatar] of Object.entries(avatars)) {
+				this.userAvatars.set(login, avatar);
+			}
+		};
+
+		this.updateAvatarRenderer();
+	};
+
+	updateAvatarRenderer() {
+		if (!this.AvatarClass) return;
+
+		if (this.settings.get('addon.seventv_emotes.animated_avatars')) {
+			let oldRenderer = this.AvatarClass.SEVENTV_oldRenderer || this.AvatarClass.render;
+
+			this.AvatarClass.render = (component, ...args) => {
+				for (let child of component.children) {
+					if (child?.type?.displayName == "ImageAvatar") this.patchImageAvatar(child);
+				}
+				return oldRenderer(component, ...args);
+			}
+
+			this.AvatarClass.SEVENTV_oldRenderer = oldRenderer;
+
+			this.rerenderAvatars();
+		}
+		else if (this.AvatarClass.SEVENTV_oldRenderer) {
+			this.rerenderAvatars();
+
+			this.AvatarClass.render = this.AvatarClass.SEVENTV_oldRenderer;
+			delete this.AvatarClass["SEVENTV_oldRenderer"];
 		}
 	}
 
@@ -65,18 +100,39 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		}
 	}
 
-	async updateAnimatedAvatars() {
-		this.userAvatars.clear();
+	rerenderAvatars() {
+		let avatarElements = document.querySelectorAll(".tw-avatar");
 
-		if (!this.settings.get('addon.seventv_emotes.animated_avatars')) return;
+		let componentsToForceUpdate = new Set();
+		let oldKeys = new Map();
 
-		const avatars = await this.api.fetchAvatars();
-		for (const [login, avatar] of Object.entries(avatars)) {
-			this.userAvatars.set(login, avatar);
+		for (let avatarElement of avatarElements) {
+			let avatarComponent = this.fine.getOwner(avatarElement);
+			
+			let component = avatarComponent;
+			while (component) {
+				if (!oldKeys.has(component)) {
+					oldKeys.set(component, component.key);
+					component.key = "SEVENTV_rerender";
+				}
+
+				if (component.stateNode) {
+					if (component.stateNode.forceUpdate) {
+						componentsToForceUpdate.add(component.stateNode);
+						break;
+					}
+				}
+
+				component = component.return;
+			}
 		}
-	};
 
-	getUserAvatar(login) {
-		return this.userAvatars.get(login.toLowerCase());
+		for (let component of componentsToForceUpdate) {
+			component.forceUpdate();
+		}
+
+		for (const [component, oldKey] of Object.entries(oldKeys)) {
+			component.key = oldKey;
+		}
 	}
 }
