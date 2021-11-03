@@ -117,10 +117,10 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 					}
 					case 'UPDATE': {
 						if (data.emote.name != data.name) {
-							message += `aliased the emote "${data.emote.name}" to "${data.name}"`;
+							message += `renamed the emote "${data.emote.name}" to "${data.name}"`;
 						}
 						else {
-							message += `unaliased the emote "${data.name}"`;
+							message += `renamed the emote "${data.name}"`;
 						}
 						break;
 					}
