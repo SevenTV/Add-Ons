@@ -109,8 +109,10 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		for (let avatarElement of avatarElements) {
 			let avatarComponent = this.fine.getOwner(avatarElement);
 
+			//Walk component tree upwards from until we find a full component we can run forceUpdate on
 			let component = avatarComponent;
 			while (component) {
+				//Updating key on every parent is neccisary to force entire tree to update
 				if (!oldKeys.has(component)) {
 					oldKeys.set(component, component.key);
 					component.key = "SEVENTV_rerender";
