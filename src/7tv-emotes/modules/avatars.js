@@ -112,7 +112,7 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 			//Walk component tree upwards from until we find a full component we can run forceUpdate on
 			let component = avatarComponent;
 			while (component) {
-				//Updating key on every parent is neccisary to force entire tree to update
+				//Updating key on every parent is necissary to force entire tree to update
 				if (!oldKeys.has(component)) {
 					oldKeys.set(component, component.key);
 					component.key = "SEVENTV_rerender";
@@ -130,7 +130,7 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		}
 
 		for (let component of componentsToForceUpdate) {
-			//Force updating twice is neccissary for some reason. (Something to do with the way react diffs the key changes?)
+			//Force updating twice is necissary for some reason. (Something to do with the way react diffs the key changes?)
 			component.forceUpdate();
 			component.forceUpdate();
 		}
