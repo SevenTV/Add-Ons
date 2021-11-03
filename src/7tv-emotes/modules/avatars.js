@@ -108,7 +108,7 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 
 		for (let avatarElement of avatarElements) {
 			let avatarComponent = this.fine.getOwner(avatarElement);
-			
+
 			let component = avatarComponent;
 			while (component) {
 				if (!oldKeys.has(component)) {
@@ -128,10 +128,12 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		}
 
 		for (let component of componentsToForceUpdate) {
+			//Force updating twice is neccissary for some reason. (Something to do with the way react diffs the key changes?)
+			component.forceUpdate();
 			component.forceUpdate();
 		}
 
-		for (const [component, oldKey] of Object.entries(oldKeys)) {
+		for (const [component, oldKey] of oldKeys) {
 			component.key = oldKey;
 		}
 	}
