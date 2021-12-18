@@ -37,9 +37,11 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 					id: badge.id,
 					title: badge.tooltip,
 					slot: 69,
-					image: badge.urls[1][1],
+					image: badge.urls[0][1],
 					urls: {
-						1: badge.urls[2][1]
+						1: badge.urls[0][1],
+						2: badge.urls[1][1],
+						4: badge.urls[2][1]
 					},
 					svg: false
 				});
