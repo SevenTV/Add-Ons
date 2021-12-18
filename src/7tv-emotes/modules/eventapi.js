@@ -93,14 +93,17 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 		}
 
 		if (channel) {
+			const oldEmote = this.emotes.getEmoteFromChannelSet(channel, data.emote_id);
+
 			let completed = false;
 			switch (data.action) {
-				case 'ADD':
 				case 'UPDATE':
+					if (!oldEmote) break;
+				case 'ADD':
 					completed = this.emotes.addEmoteToChannelSet(channel, {...data.emote, id: data.emote_id, name: data.name});
 					break;
 				case 'REMOVE':
-					completed = this.emotes.removeEmoteFromChannelSet(channel, {...data.emote, id: data.emote_id, name: data.name});
+					completed = this.emotes.removeEmoteFromChannelSet(channel, data.emote_id);
 					break;
 			}
 
@@ -116,11 +119,11 @@ export default class EventAPI extends FrankerFaceZ.utilities.module.Module {
 						break;
 					}
 					case 'UPDATE': {
-						if (data.emote.name != data.name) {
-							message += `renamed the emote "${data.emote.name}" to "${data.name}"`;
+						if (oldEmote && oldEmote.name != data.name) {
+							message += `renamed the emote "${oldEmote.name}" to "${data.name}"`;
 						}
 						else {
-							message += `renamed the emote "${data.name}"`;
+							message += `updated the emote "${data.name}"`;
 						}
 						break;
 					}

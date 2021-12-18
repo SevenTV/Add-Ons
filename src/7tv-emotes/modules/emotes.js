@@ -117,21 +117,33 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		return false;
 	}
 
-	removeEmoteFromChannelSet(channel, emote) {
+	removeEmoteFromChannelSet(channel, emoteID) {
 		const emoteSet = this.getChannelSet(channel);
 
 		if (emoteSet) {
 			const emotes = emoteSet.emotes || {};
 
-			if (emotes[emote.id] === undefined) return false;
-
-			delete emotes[emote.id];
+			delete emotes[emoteID];
 
 			this.setChannelSet(channel, Object.values(emotes));
 			return true;
 		}
 
 		return false;
+	}
+
+	getEmoteFromChannelSet(channel, emoteID) {
+		const emoteSet = this.getChannelSet(channel);
+
+		if (emoteSet && emoteSet.emotes) {
+			let ffzEmote = emoteSet.emotes[emoteID];
+
+			if (ffzEmote && ffzEmote.SEVENTV_emote){
+				return ffzEmote.SEVENTV_emote;
+			}
+		}
+
+		return null;
 	}
 
 	async updateChannelSet(channel) {
@@ -170,6 +182,10 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		const ffzEmote = {
 			id: emote.id,
 			name: emote.name,
+			owner: {
+				display_name: emote.owner.display_name,
+				name: emote.owner.login
+			},
 			urls: {
 				1: emote.urls[0][1],
 				2: emote.urls[1][1],
@@ -180,15 +196,9 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			modifier_offset: "0",
 			width: emote.width[0],
 			height: emote.height[0],
-			click_url: this.api.getEmoteAppURL(emote)
+			click_url: this.api.getEmoteAppURL(emote),
+			SEVENTV_emote: emote
 		};
-
-		if (emote.owner) {
-			ffzEmote.owner = {
-				display_name: emote.owner.display_name,
-				name: emote.owner.login
-			};
-		}
 
 		return ffzEmote;
 	}
