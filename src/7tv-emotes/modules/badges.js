@@ -48,6 +48,8 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 				this.bulkBadgeIDs.add(id);
 			}
 		}
+
+		this.emit("chat:update-line-badges");
 	}
 
 	removeBadges() {
