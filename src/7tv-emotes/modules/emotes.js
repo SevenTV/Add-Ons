@@ -101,8 +101,10 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	addEmoteToChannelSet(channel, emote, force = false) {
 		const emoteSet = this.getChannelSet(channel);
 
+		const showUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
+
 		if (emoteSet) {
-			if (force || this.shouldShowEmote(emote)) {
+			if (showUnlisted || force || !this.isEmoteUnlisted(emote)) {
 				const emotes = emoteSet.emotes || {};
 
 				emotes[emote.id] = this.convertEmote(emote);
@@ -136,9 +138,11 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		if (this.settings.get('addon.seventv_emotes.channel_emotes')) {
 			let emotes = await this.api.fetchChannelEmotes(channel.login);
 
+			const showUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
+
 			let ffzEmotes = [];
 			for (let emote of emotes) {
-				if (this.shouldShowEmote(emote)) {
+				if (showUnlisted || !this.isEmoteUnlisted(emote)) {
 					ffzEmotes.push(this.convertEmote(emote));
 				}
 			}
@@ -146,9 +150,10 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			this.setChannelSet(channel, ffzEmotes);
 			return true;
 		}
-
-		this.setChannelSet(channel, null);
-		return false;
+		else {
+			this.setChannelSet(channel, null);
+			return false;
+		}
 	}
 
 	async updateChannelSets() {
@@ -188,12 +193,10 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		return ffzEmote;
 	}
 
-	shouldShowEmote(emote) {
-		const ShowUnlisted = this.settings.get('addon.seventv_emotes.unlisted_emotes');
-
+	isEmoteUnlisted(emote) {
 		const Unlisted = this.getBitFlag(emote.visibility, 1 << 2);
 		const PermanentlyUnlisted = this.getBitFlag(emote.visibility, 1 << 8);
 
-		return ShowUnlisted || !(Unlisted || PermanentlyUnlisted);
+		return Unlisted || PermanentlyUnlisted;
 	}
 }
