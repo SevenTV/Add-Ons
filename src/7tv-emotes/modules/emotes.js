@@ -180,7 +180,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			modifier_offset: "0",
 			width: emote.width[0],
 			height: emote.height[0],
-			click_url: `https://7tv.app/emotes/${emote.id}`
+			click_url: this.api.getEmoteAppURL(emote)
 		};
 
 		if (emote.owner) {

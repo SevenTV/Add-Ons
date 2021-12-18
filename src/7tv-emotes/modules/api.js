@@ -4,6 +4,7 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 
         this.apiBaseURI = "https://api.7tv.app/v2";
         this.eventsBaseURI = "https://events.7tv.app/v1";
+        this.appBaseURI = "https://7tv.app/";
 
         this.clientPlatform = "ffz";
         this.clientVersion = this.parent.manifest.version;
@@ -73,5 +74,9 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
         query.set("agent", `${this.clientPlatform}:${this.clientVersion}`);
 
         return `${this.eventsBaseURI}/channel-emotes?${query.toString()}`;
+    }
+
+    getEmoteAppURL(emote) {
+        return `${this.appBaseURI}/emotes/${emote.id}`;
     }
 }
