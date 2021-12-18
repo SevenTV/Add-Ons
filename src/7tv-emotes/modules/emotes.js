@@ -8,6 +8,8 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		this.inject('chat');
 		this.inject('chat.emotes');
 
+		this.setIcon = this.parent.manifest.icon;
+
 		this.settings.add('addon.seventv_emotes.global_emotes', {
 			default: true,
 			ui: {
@@ -67,7 +69,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		this.emotes.addDefaultSet('addon.seventv_emotes', 'addon.seventv_emotes.global', {
 			title: "Global Emotes",
 			source: "7TV",
-			icon: "https://7tv.app/assets/favicon.png",
+			icon: this.setIcon,
 			emotes: ffzEmotes
 		});
 	}
@@ -90,7 +92,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 			channel.addSet('addon.seventv_emotes', setID, {
 				title: "Channel Emotes",
 				source: "7TV",
-				icon: "https://7tv.app/assets/favicon.png",
+				icon: this.setIcon,
 				emotes: ffzEmotes
 			});
 		}

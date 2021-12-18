@@ -1,5 +1,3 @@
-import { version } from '../manifest.json';
-
 export default class API extends FrankerFaceZ.utilities.module.Module {
     constructor(...args) {
 		super(...args);
@@ -8,7 +6,7 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
         this.eventsBaseURI = "https://events.7tv.app/v1";
 
         this.clientPlatform = "ffz";
-        this.clientVersion = version;
+        this.clientVersion = this.parent.manifest.version;
     }
 
     async fetchAvatars() {
