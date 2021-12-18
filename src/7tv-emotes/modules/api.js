@@ -4,8 +4,8 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
     constructor(...args) {
 		super(...args);
 
-        this.apiBaseURI = "https://api.7tv.app/v2/";
-        this.eventsBaseURI = "https://events.7tv.app/v1/";
+        this.apiBaseURI = "https://api.7tv.app/v2";
+        this.eventsBaseURI = "https://events.7tv.app/v1";
 
         this.clientPlatform = "ffz";
         this.clientVersion = version;
@@ -65,7 +65,7 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
         headers.set("X-SevenTV-Platform", this.clientPlatform);
         headers.set("X-SevenTV-Version", this.clientVersion);
 
-        return fetch(`${this.apiBaseURI}${route}`, {...options, headers: headers})
+        return fetch(`${this.apiBaseURI}/${route}`, {...options, headers: headers})
     }
 
     getEmotesEventSourceURL(channelLogins) {
