@@ -19,7 +19,7 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 
 		this.bulkBadgeIDs = new Set();
 	}
-	
+
 	onEnable() {
 		this.on('settings:changed:addon.seventv_emotes.badges', () => this.updateBadges());
 

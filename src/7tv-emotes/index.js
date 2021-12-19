@@ -8,7 +8,7 @@ class SevenTVEmotes extends Addon {
 
 		this.manifest = this.addons.getAddon(this.addonID);
 	}
-	
+
 	async onLoad() {
 		let context = await require.context('./modules', false, /\.js$/);
 		await this.populate(context);
