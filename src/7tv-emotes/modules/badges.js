@@ -30,7 +30,7 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 		this.removeBadges();
 
 		if (this.settings.get('addon.seventv_emotes.badges')) {
-			const badges = await this.api.cosmetics.fetchBadges();
+			const badges = await this.api.cosmetics.getBadges();
 			for (const badge of badges) {
 				const id = `addon.seventv_emotes.badge-${badge.id}`;
 				this.badges.loadBadgeData(id, {

@@ -22,6 +22,33 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 		return fetch(`${this.apiBaseURI}/${route}`, {...options, headers: headers})
 	}
 
+	async requestJSON(route, options) {
+		const response = await this.makeRequest(route, options);
+
+		if (response.ok) {
+			let json = await response.json();
+			return json;
+		}
+
+		return null;
+	}
+
+	async requestObject(route, options) {
+		const json = await this.requestJSON(route, options);
+
+		if (json != null && typeof json == 'object') return json;
+
+		return {};
+	}
+
+	async requestArray(route, options) {
+		const json = await this.requestJSON(route, options);
+
+		if (json instanceof Array) return json;
+
+		return [];
+	}
+
 	getEmotesEventSourceURL(channelLogins) {
 		let query = new URLSearchParams();
 
@@ -37,28 +64,12 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 }
 
 export class Emotes extends FrankerFaceZ.utilities.module.Module {
-	async fetchGlobalEmotes() {
-		let response = await this.parent.makeRequest('emotes/global');
-		if (response.ok) {
-			let json = await response.json();
-			if (json instanceof Array) {
-				return json;
-			}
-		}
-
-		return [];
+	fetchGlobalEmotes() {
+		return this.parent.requestArray('emotes/global');
 	}
 
-	async fetchChannelEmotes(login) {
-		let response = await this.parent.makeRequest(`users/${login}/emotes`);
-		if (response.ok) {
-			let json = await response.json();
-			if (json instanceof Array) {
-				return json;
-			}
-		}
-
-		return [];
+	fetchChannelEmotes(login) {
+		return this.parent.requestArray(`users/${login}/emotes`);
 	}
 }
 
@@ -67,27 +78,41 @@ export class Cosmetics extends FrankerFaceZ.utilities.module.Module {
 		super(...args);
 	}
 
-	async fetchAvatars() {
-		let response = await this.parent.makeRequest('cosmetics/avatars?map_to=login');
-		if (response.ok) {
-			let json = await response.json();
-			if (typeof json == 'object' && json != null) {
-				return json;
-			}
-		}
-
-		return {};
+	fetchAvatars() {
+		return this.parent.requestObject('cosmetics/avatars?map_to=login');
 	}
 
-	async fetchBadges() {
-		let response = await this.parent.makeRequest('badges?user_identifier=twitch_id');
-		if (response.ok) {
-			let json = await response.json();
-			if (typeof json == 'object' && json != null && json['badges'] instanceof Array) {
-				return json['badges'];
+	fetchCosmetics() {
+		return this.parent.requestObject('cosmetics?user_identifier=twitch_id');
+	}
+
+	updateCosmetics(force = false) {
+		if (!this.cosmetics || force) {
+			if (!this.cosmeticsUpdate) {
+				this.cosmeticsUpdate = this.fetchCosmetics().then((json) => {
+					this.cosmetics = json;
+					this.cosmeticsUpdate = undefined;
+					return true;
+				});
 			}
+
+			return this.cosmeticsUpdate;
 		}
 
-		return [];
+		return Promise.resolve(false);
+	}
+
+	async getCosmeticsOfType(type) {
+		await this.updateCosmetics();
+
+		return this.cosmetics && this.cosmetics[type] || [];
+	}
+
+	getBadges() {
+		return this.getCosmeticsOfType('badges');
+	}
+
+	getPaints() {
+		return this.getCosmeticsOfType('paints');
 	}
 }
