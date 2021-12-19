@@ -51,7 +51,7 @@ export default class Avatars extends FrankerFaceZ.utilities.module.Module {
 		this.userAvatars.clear();
 
 		if (this.settings.get('addon.seventv_emotes.animated_avatars')) {
-			const avatars = await this.api.fetchAvatars();
+			const avatars = await this.api.cosmetics.fetchAvatars();
 			for (const [login, avatar] of Object.entries(avatars)) {
 				this.userAvatars.set(login, avatar);
 			}

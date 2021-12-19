@@ -2,60 +2,15 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
 
+		this.inject(Emotes);
+		this.inject(Cosmetics);
+
 		this.apiBaseURI = 'https://api.7tv.app/v2';
 		this.eventsBaseURI = 'https://events.7tv.app/v1';
-		this.appBaseURI = 'https://7tv.app/';
+		this.appBaseURI = 'https://7tv.app';
 
 		this.clientPlatform = 'ffz';
 		this.clientVersion = this.parent.manifest.version;
-	}
-
-	async fetchAvatars() {
-		let response = await this.makeRequest('cosmetics/avatars?map_to=login');
-		if (response.ok) {
-			let json = await response.json();
-			if (typeof json == 'object' && json != null) {
-				return json;
-			}
-		}
-
-		return {};
-	}
-
-	async fetchBadges() {
-		let response = await this.makeRequest('badges?user_identifier=twitch_id');
-		if (response.ok) {
-			let json = await response.json();
-			if (typeof json == 'object' && json != null && json['badges'] instanceof Array) {
-				return json['badges'];
-			}
-		}
-
-		return [];
-	}
-
-	async fetchGlobalEmotes() {
-		let response = await this.makeRequest('emotes/global');
-		if (response.ok) {
-			let json = await response.json();
-			if (json instanceof Array) {
-				return json;
-			}
-		}
-
-		return [];
-	}
-
-	async fetchChannelEmotes(login) {
-		let response = await this.makeRequest(`users/${login}/emotes`);
-		if (response.ok) {
-			let json = await response.json();
-			if (json instanceof Array) {
-				return json;
-			}
-		}
-
-		return [];
 	}
 
 	makeRequest(route, options) {
@@ -78,5 +33,61 @@ export default class API extends FrankerFaceZ.utilities.module.Module {
 
 	getEmoteAppURL(emote) {
 		return `${this.appBaseURI}/emotes/${emote.id}`;
+	}
+}
+
+export class Emotes extends FrankerFaceZ.utilities.module.Module {
+	async fetchGlobalEmotes() {
+		let response = await this.parent.makeRequest('emotes/global');
+		if (response.ok) {
+			let json = await response.json();
+			if (json instanceof Array) {
+				return json;
+			}
+		}
+
+		return [];
+	}
+
+	async fetchChannelEmotes(login) {
+		let response = await this.parent.makeRequest(`users/${login}/emotes`);
+		if (response.ok) {
+			let json = await response.json();
+			if (json instanceof Array) {
+				return json;
+			}
+		}
+
+		return [];
+	}
+}
+
+export class Cosmetics extends FrankerFaceZ.utilities.module.Module {
+	constructor(...args) {
+		super(...args);
+	}
+
+	async fetchAvatars() {
+		let response = await this.parent.makeRequest('cosmetics/avatars?map_to=login');
+		if (response.ok) {
+			let json = await response.json();
+			if (typeof json == 'object' && json != null) {
+				return json;
+			}
+		}
+
+		return {};
+	}
+
+	async fetchBadges() {
+		let response = await this.parent.makeRequest('badges?user_identifier=twitch_id');
+		if (response.ok) {
+			let json = await response.json();
+			if (typeof json == 'object' && json != null && json['badges'] instanceof Array) {
+				return json['badges'];
+			}
+		}
+
+		return [];
 	}
 }
