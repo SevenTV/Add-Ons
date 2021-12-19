@@ -2,9 +2,9 @@ class SevenTVEmotes extends Addon {
 	constructor(...args) {
 		super(...args);
 
-		this.inject("addons");
+		this.inject('addons');
 
-		this.addonID = this.name.replace(/^addon\./, "");
+		this.addonID = this.name.replace(/^addon\./, '');
 
 		this.manifest = this.addons.getAddon(this.addonID);
 	}

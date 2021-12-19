@@ -2,7 +2,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
 
-		this.inject("..api");
+		this.inject('..api');
 
 		this.inject('settings');
 		this.inject('chat');
@@ -67,8 +67,8 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 		}
 
 		this.emotes.addDefaultSet('addon.seventv_emotes', 'addon.seventv_emotes.global', {
-			title: "Global Emotes",
-			source: "7TV",
+			title: 'Global Emotes',
+			source: '7TV',
 			icon: this.setIcon,
 			emotes: ffzEmotes
 		});
@@ -90,8 +90,8 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 
 		if (ffzEmotes && ffzEmotes.length > 0) {
 			channel.addSet('addon.seventv_emotes', setID, {
-				title: "Channel Emotes",
-				source: "7TV",
+				title: 'Channel Emotes',
+				source: '7TV',
 				icon: this.setIcon,
 				emotes: ffzEmotes
 			});
@@ -193,7 +193,7 @@ export default class Emotes extends FrankerFaceZ.utilities.module.Module {
 				4: emote.urls[3][1]
 			},
 			modifier: this.getBitFlag(emote.visibility, 1 << 7),
-			modifier_offset: "0",
+			modifier_offset: '0',
 			width: emote.width[0],
 			height: emote.height[0],
 			click_url: this.api.getEmoteAppURL(emote),

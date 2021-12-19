@@ -2,7 +2,7 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 	constructor(...args) {
 		super(...args);
 
-		this.inject("..api");
+		this.inject('..api');
 
 		this.inject('settings');
 		this.inject('chat.badges');
@@ -51,12 +51,12 @@ export default class Badges extends FrankerFaceZ.utilities.module.Module {
 			}
 		}
 
-		this.emit("chat:update-line-badges");
+		this.emit('chat:update-line-badges');
 	}
 
 	removeBadges() {
 		for (let id of this.bulkBadgeIDs) {
-			this.badges.deleteBulk("addon.seventv_emotes", id);
+			this.badges.deleteBulk('addon.seventv_emotes', id);
 			delete this.badges.badges[id];
 		}
 
