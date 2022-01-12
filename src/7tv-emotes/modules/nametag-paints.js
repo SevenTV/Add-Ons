@@ -88,9 +88,13 @@ export default class NametagPaints extends FrankerFaceZ.utilities.module.Module 
 		}
 
 		let dropShadow;
-		if (paint.drop_shadow) {
-			let shadow = paint.drop_shadow;
-			dropShadow = `drop-shadow(${shadow.x_offset}px ${shadow.y_offset}px ${shadow.radius}px ${this.getCSSColorFromInt(shadow.color)})`;
+		if (paint.drop_shadows instanceof Array) {
+			let shadows = [];
+			for (let shadow of paint.drop_shadows) {
+				shadows.push(`drop-shadow(${shadow.x_offset}px ${shadow.y_offset}px ${shadow.radius}px ${this.getCSSColorFromInt(shadow.color)})`);
+			}
+
+			dropShadow = shadows.join(' ');
 		}
 
 		return `
