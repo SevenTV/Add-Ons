@@ -2,8 +2,8 @@ import { APIError } from "./APIError";
 
 export class APIBase {
 	constructor(settings) {
-        this.settings = settings;
-    }
+		this.settings = settings;
+	}
 
 	makeRequest(route, options) {
 		const headers = new Headers(options && options.headers || {});

@@ -26,7 +26,7 @@ export default class EmotesModule extends FrankerFaceZ.utilities.module.Module {
 			}
 		});
 
-        let avifSupported = browserSupportsAVIF();
+		let avifSupported = browserSupportsAVIF();
 
 		this.settings.add('addon.seventv_emotes.image_format', {
 			default: avifSupported ? 'AVIF' : 'WEBP',
@@ -34,7 +34,7 @@ export default class EmotesModule extends FrankerFaceZ.utilities.module.Module {
 				path: 'Add-Ons > 7TV Emotes >> Emotes',
 				title: 'Preferred Image Format',
 				description: `Format to use when displaying emotes from 7TV.${avifSupported ? '' : '\n\n*Warning: It appears that your browser doesn\'t fully support AVIF*'}`,
-                component: 'setting-select-box',
+				component: 'setting-select-box',
 				data: [
 					{ value: 'WEBP', title: 'WEBP' },
 					{ value: 'AVIF', title: 'AVIF' }

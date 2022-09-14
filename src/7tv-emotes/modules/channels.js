@@ -61,7 +61,7 @@ export default class ChannelsModule extends FrankerFaceZ.utilities.module.Module
 }
 
 export class ChannelManager {
-    constructor(module, channel) {
+	constructor(module, channel) {
 		this.module = module;
 
 		this.channel = channel;
@@ -73,7 +73,7 @@ export class ChannelManager {
 		this.ffzSetID = null;
 	}
 
-    async initialize() {
+	async initialize() {
 		await this.fetchUser();
 
 		this.updateEmoteSet();
@@ -83,7 +83,7 @@ export class ChannelManager {
 		this.module.on('settings:changed:addon.seventv_emotes.image_format', this.onEmoteSettingsChange, this);
 	}
 
-    destroy() {
+	destroy() {
 		this.module.off('settings:changed:addon.seventv_emotes.channel_emotes', this.onEmoteSettingsChange, this);
 		this.module.off('settings:changed:addon.seventv_emotes.unlisted_emotes', this.onEmoteSettingsChange, this);
 		this.module.off('settings:changed:addon.seventv_emotes.image_format', this.onEmoteSettingsChange, this);
